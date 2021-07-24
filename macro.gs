@@ -42,20 +42,23 @@ function Transformconsoledata() {
 
     // get all same rows within 3 min. Store in list.
     const sameOrderIndicies = []; // index is excel row number: 1, 2, 3 ...
-    const currSymbol =  currRow[0];
-    const currDate = currRow[1];
-    const currTime = currRow[2];
-    const currType = currRow[3];
+    const currSymbol =  currRow[0].toString();
+    const currDate = currRow[1].toString();
+    const currTime = currRow[2].toString();
+    const currType = currRow[3].toString();
+    const currQty = parseInt(currRow[4]);
+    const currPrice = parseFloat(currRow[5]);
     for(let j = i + 1; j <= lastRow; j++) {
       const row = sheet.getRange(j, 1, 1, lastCol).getValues()[0];
-      Logger.log(row);
-      const symbol = row[0];
-      const date = row[1];
-      const time = row[2];
-      const type = row[3];
+      const symbol = row[0].toString();
+      const date = row[1].toString();
+      const time = row[2].toString();
+      const type = row[3].toString();
+      Logger.log(time);
       if(currDate === date && isWithinInterval(time, currTime, 3)) {
         if(currSymbol === symbol && currType === type) {
-          sameOrderIndicies[j];
+          sameOrderIndicies.push(j);
+          Logger.log(j);
         }
       }
       else {
@@ -64,20 +67,20 @@ function Transformconsoledata() {
     }
 
     // combine the list with current entry. weighted average price.
-    const numer = 0, denom = 0;
+    let numer = currQty * currPrice, denom = currQty;
     for (let j = 0 ; j < sameOrderIndicies.length; j++) {
-      const row = sheet.getRange(j, 1, 1, lastCol).getValues()[0];
-      const currQty = row[4];
-      const currPrice = row[5];
+      const row = sheet.getRange(sameOrderIndicies[j], 1, 1, lastCol).getValues()[0];
+      const currQty = parseInt(row[4]);
+      const currPrice = parseFloat(row[5]);
       numer += currQty * currPrice;
       denom += currQty;
     }
 
     // Set new qty
-    sheet.getRange(i, 5).setValue(denom);
+    sameOrderIndicies.length > 0 && sheet.getRange(i, 5).setValue(denom);
 
     // Set new price
-    sheet.getRange(i, 6).setValue(numer);
+    sameOrderIndicies.length > 0 && sheet.getRange(i, 6).setValue(numer/denom);
 
     // delete those rows.
     sameOrderIndicies.reverse().forEach(index => sheet.deleteRow(index));
